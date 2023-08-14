@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import httpServer from "http";
+import http from "http";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -15,19 +15,28 @@ import messageRouter from "./routes/messageRoute.js";
 dotenv.config();
 
 const PORT = 3005 || process.env.PORT;
-const Origin = process.env.Origin
+
 const app = express();
-const http = httpServer.Server(app);
-const io = new Server(http, {
+
+app.use(
+  cors({
+    origin: "http://localhost:3004",
+  })
+);
+
+const httpServer = http.createServer(app);
+
+const io = new Server(httpServer, {
   cors: {
-    origin: Origin,
+    origin: "http://localhost:3004",
+
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"],
     credentials: true,
   },
 });
 
 app.use(express.json());
-
-app.use(cors());
 
 app.use("/api/auth", authUserRouter);
 
@@ -52,6 +61,10 @@ mongoose
 
 let Users = [];
 io.on("connection", function (socket) {
+  socket.on("connect_error", (err) => {
+    console.log(`connect_error due to ${err.message}`);
+  });
+
   socket.on("addUser", (userId) => {
     const exists = Users.some((user) => user.userId === userId);
     console.log(exists);
@@ -68,10 +81,9 @@ io.on("connection", function (socket) {
     const senderExists = Users.find((user) => user.userId === senderId);
     const recipientExists = Users.find((user) => user.userId === recipientId);
 
-
     if (recipientExists && senderExists) {
       const recepientSocketID = recipientExists.socketId;
-     
+
       io.to(recepientSocketID).emit("incomingCall", {
         ...data,
         senderSocketID: senderExists.socketId,
@@ -108,6 +120,6 @@ io.on("connection", function (socket) {
   });
 });
 
-http.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log("server running at", PORT);
 });
