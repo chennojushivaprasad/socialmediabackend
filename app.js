@@ -14,7 +14,7 @@ import messageRouter from "./routes/messageRoute.js";
 
 dotenv.config();
 
-const PORT = 3005;
+const PORT = process.env.PORT  || 3005;
 const Origin = process.env.Origin
 const app = express();
 const http = httpServer.Server(app);
