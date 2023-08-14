@@ -20,7 +20,7 @@ const app = express();
 const http = httpServer.Server(app);
 const io = new Server(http, {
   cors: {
-    origin: ["http://localhost:3004/"],
+    origin: ["http://localhost:3004"],
   },
 });
 
