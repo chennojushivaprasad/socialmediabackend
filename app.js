@@ -15,13 +15,12 @@ import messageRouter from "./routes/messageRoute.js";
 dotenv.config();
 
 const PORT = 3005 || process.env.PORT;
-const Origin = process.env.Origin
+
 const app = express();
 const http = httpServer.Server(app);
 const io = new Server(http, {
   cors: {
-    origin: Origin,
-    credentials: true,
+    origin: ["http://localhost:3004/"],
   },
 });
 
