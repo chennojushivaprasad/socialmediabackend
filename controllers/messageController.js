@@ -48,14 +48,20 @@ import Message from "../model/messageModel.js";
 // };
 
 export const addMessage = async (req, res, next) => {
-   const {senderId,conversationId} = req.params
+  const { senderId, conversationId } = req.params;
 
-  const { content } = req.body;
+  const { text, image,audio, video, post } = req.body;
+
   const message = new Message({
-    content,
     senderId,
     conversationId,
+    text:text?text:null,
+    video:video?video:null,
+    image:image?image:null,
+    audio:audio?audio:null,
+    post:post?post:null
   });
+
 
   try {
     const data = await message.save();
@@ -70,7 +76,7 @@ export const fetchAllChats = async (req, res, next) => {
 
   let message;
   try {
-    message = await Message.find({conversationId});
+    message = await Message.find({ conversationId });
     if (message === null) return res.status(200).json([]);
 
     return res.status(200).json(message);
