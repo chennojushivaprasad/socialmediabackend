@@ -40,60 +40,74 @@ export const getSearchUser = async (req, res, next) => {
   }
 };
 
-export const addFollow = async (req, res, next) => {
+export const follow = async (req, res, next) => {
   const { userId, followId } = req.body;
-  console.log("follow");
-  let user;
-  let followUser;
-  try {
-    user = await User.findById(userId);
-    followUser = await User.findById(followId);
-  } catch (error) {
-    console.log(" error", error);
-    return res.status(401).json("error");
-  }
-
-  let data;
-
-  try {
-    data = await User.updateOne(
-      { following: followId },
-      {
-        $pullAll: {
-          following: [{ _id: followId }],
-        },
-      }
-    );
-
-    if (data.matchedCount !== 0) {
-      console.log(data);
-      return res.status(200).json({ message: "updated successfully" });
-    }
-  } catch (error) {
-    return console.log(error);
-  }
 
   try {
     const session = await mongoose.startSession();
     session.startTransaction();
-    user.following.push(followId);
-    console.log("follow added");
-    await user.save({ session });
-    followUser.followers.push(userId);
-    await followUser.save({ session });
+
+    const opts = { session };
+    
+    await User.findByIdAndUpdate(
+      followId,
+      { $addToSet: { followers: userId } },
+      opts
+    );
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { following: followId } },
+      { new: true, session }
+    );
+
     await session.commitTransaction();
-    return res.status(200).json("added to follow list");
+    session.endSession();
+    res.status(200).json({message:"followed"})
   } catch (error) {
-    return res.status(400).json("error");
+    return console.log(error);
+  }
+};
+
+export const unFollow = async (req, res, next) => {
+  const { userId, unfollowId } = req.body;
+
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    const opts = { session };
+
+    // Update the user being unfollowed (remove userId from their followers)
+    await User.findByIdAndUpdate(
+      unfollowId,
+      { $pull: { followers: userId } },
+      opts
+    );
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { following: unfollowId } },
+      { new: true, session }
+    )
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({message:"unfollowed"})
+  } catch (error) {
+    return console.log(error);
   }
 };
 
 export const updateUser = async (req, res, next) => {
-  const {userId} = req.params
+  const { userId } = req.params;
   const { userName, userImage } = req.body;
   try {
-    await User.updateOne({ _id: userId }, { $set: { username: userName,userImage:userImage } });
-    return res.status(200).json({message:"updated successfully"})
+    await User.updateOne(
+      { _id: userId },
+      { $set: { username: userName, userImage: userImage } }
+    );
+    return res.status(200).json({ message: "updated successfully" });
   } catch (error) {
     return;
   }
