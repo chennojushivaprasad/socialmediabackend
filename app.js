@@ -20,7 +20,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3004",
+    origin: "https://insta-replica.netlify.app",
   })
 );
 
@@ -28,8 +28,7 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3004",
-
+    origin: "https://insta-replica.netlify.app",
     methods: ["GET", "POST"],
     allowedHeaders: ["my-custom-header"],
     credentials: true,
@@ -67,7 +66,7 @@ io.on("connection", function (socket) {
 
   socket.on("addUser", (userId) => {
     const exists = Users.some((user) => user.userId === userId);
-    console.log(exists);
+
     if (!exists) {
       const newUser = { userId, socketId: socket.id };
       Users.push(newUser);
